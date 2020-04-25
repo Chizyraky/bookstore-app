@@ -58,7 +58,7 @@ delete_selected_btn = Button(root, text="Delete selected", font=('arial', 10, 'b
 delete_selected_btn.grid(row=6, column=6)
 
 # Adding the display label
-data_entry_frame = LabelFrame(root, bd=1, width=400, height=200, bg="cyan")
+data_entry_frame = Frame(root, bd=1, width=400, height=200, bg="cyan")
 data_entry_frame.grid(row=2, column=0)
 
 close_btn = Button(root, text="Close", font=('arial', 10, 'bold'), width=15)
