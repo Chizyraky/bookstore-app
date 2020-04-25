@@ -16,14 +16,14 @@ conn = sqlite3.connect('library.db')
 cur = conn.cursor()
 
 # Calling the execute() method to create table and perform SQL commands
-'''
-cur.execute("""CREATE TABLE bio (
-            bookTitle text,
+# Create table
+cur.execute("""create table books (
+            title text,
             author text,
             year integer,
             isbn integer
-            )""")
-'''
+)
+""")
 
 # Create text boxes for the user entry
 book_title = Entry(root, width=20)
