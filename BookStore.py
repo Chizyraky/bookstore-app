@@ -1,11 +1,11 @@
 from tkinter import *
 import sqlite3
 from tkinter import ttk
-from datetime import datetime
 
+# Creation ad sizing of the GUI
 root = Tk()
 root.title("Book Store Manager")
-root.geometry("1000x600+0+0")
+root.geometry("850x350")
 space = Text(root)
 
 # Creating a connection to the database
@@ -33,6 +33,11 @@ update_id = None
 
 # Create Submit Function for database
 def addEntry():
+    """
+    Adds or updates the book details to the database
+
+    :return: void
+    """
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
     idd = update_id
@@ -58,6 +63,11 @@ def addEntry():
 
 
 def view_all():
+    """
+    Displays all the saved books in the database
+
+    :return:void
+    """
     view_table.delete(*view_table.get_children())
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
@@ -74,6 +84,11 @@ def view_all():
 
 
 def delete():
+    """
+    Deletes selected book from the database by id
+
+    :return: void
+    """
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
     selected_item = view_table.item(view_table.focus())
@@ -87,6 +102,11 @@ def delete():
 
 
 def search():
+    """
+    Prints search result according to search string and type of search.
+
+    :return: void
+    """
     view_table.delete(*view_table.get_children())
 
     select = callback()
@@ -113,6 +133,11 @@ def search():
 
 
 def update():
+    """
+    Places selected book in input entry to be edited
+
+    :return: void
+    """
     clear_input()
     selected_item = view_table.item(view_table.focus())
     global update_id
@@ -124,6 +149,10 @@ def update():
 
 
 def clear_input():
+    """
+    Clears all input from entry boxes
+    :return: void
+    """
     book_title.delete(0, END)
     author.delete(0, END)
     yr.delete(0, END)
@@ -132,7 +161,13 @@ def clear_input():
 
 
 def callback(*args):
-    return variable.get()
+    """
+    Gets string selection from dropdown selector ;
+    :param args:
+    :return: string
+
+    """
+    return opt_variable.get()
 
 
 # Create text boxes for the user entry
@@ -169,13 +204,13 @@ OptionList = [
 ]
 option_frame = Frame(root, bd=1, bg='cyan')
 option_frame.grid(row=2, column=2)
-variable = StringVar(root)
-variable.set('???')
-opt = ttk.OptionMenu(option_frame, variable, *OptionList)
+opt_variable = StringVar(root)
+opt_variable.set('???')
+opt = ttk.OptionMenu(option_frame, opt_variable, *OptionList)
 opt.config(width=10)
 opt.pack(side="top")
 option_select = 'id'
-variable.trace("w", callback)
+opt_variable.trace("w", callback)
 
 # Creating the execution buttons
 view_all_btn = Button(root, text="View all", font=('arial', 10, 'bold'), width=15, command=view_all)
