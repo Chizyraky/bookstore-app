@@ -4,7 +4,7 @@ from tkinter import ttk
 from datetime import datetime
 
 root = Tk()
-root.title("XYZ Book Store Management")
+root.title("Book Store Manager")
 root.geometry("1000x600+0+0")
 space = Text(root)
 
@@ -23,37 +23,42 @@ cur.execute("""create table if not exists books (
             isbn integer
 )
 """)
+# Commit Changes
+conn.commit()
+# Close connection
+conn.close()
+
+update_id = None
 
 
 # Create Submit Function for database
 def addEntry():
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
+    idd = update_id
+    if idd is None:
+        # Insert into database
+        cur.execute("INSERT INTO books VALUES (NULL, :title, :author, :yr, :isbn)",
+                    {
+                        'title': book_title.get(),
+                        'author': author.get(),
+                        'yr': yr.get(),
+                        'isbn': isbn.get(),
+                    }
+                    )
+    else:
+        sql = 'update books set title= ?, author=?, year=?, isbn=? where id=?'
+        cur.execute(sql, (book_title.get(), author.get(), yr.get(), isbn.get(), idd))
 
-    # if():
-
-    # Insert into database
-    cur.execute("INSERT INTO books VALUES (NULL, :title, :author, :yr, :isbn)",
-                {
-                    'title': book_title.get(),
-                    'author': author.get(),
-                    'yr': yr.get(),
-                    'isbn': isbn.get(),
-                }
-                )
-    # Commit Changes
     conn.commit()
-    # Close connection
     conn.close()
     # Clear inputs from form
-    book_title.delete(0, END)
-    author.delete(0, END)
-    yr.delete(0, END)
-    isbn.delete(0, END)
+    clear_input()
+    view_all()
 
 
 def view_all():
-    treev.delete(*treev.get_children())
+    view_table.delete(*view_table.get_children())
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
 
@@ -62,7 +67,7 @@ def view_all():
     records = cur.fetchall()
 
     for record in records:
-        treev.insert('', 'end', values=record)
+        view_table.insert('', 'end', values=record)
 
     conn.commit()
     conn.close()
@@ -71,7 +76,7 @@ def view_all():
 def delete():
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
-    selected_item = treev.item(treev.focus())
+    selected_item = view_table.item(view_table.focus())
     delete_id = selected_item.get('values')[0]
 
     # Delete from database
@@ -82,7 +87,7 @@ def delete():
 
 
 def search():
-    treev.delete(*treev.get_children())
+    view_table.delete(*view_table.get_children())
 
     select = callback()
 
@@ -92,7 +97,7 @@ def search():
         cur.execute("select * from books where id=?", (search_entry.get(),))
         results = cur.fetchall()
         for result in results:
-            treev.insert('', 'end', values=result)
+            view_table.insert('', 'end', values=result)
         conn.commit()
         conn.close()
     else:
@@ -102,9 +107,28 @@ def search():
         cur.execute(sql, ("%" + search_entry.get() + "%",))
         results = cur.fetchall()
         for result in results:
-            treev.insert('', 'end', values=result)
+            view_table.insert('', 'end', values=result)
         conn.commit()
         conn.close()
+
+
+def update():
+    clear_input()
+    selected_item = view_table.item(view_table.focus())
+    global update_id
+    update_id = selected_item.get('values')[0]
+    book_title.insert(0, selected_item.get('values')[1])
+    author.insert(0, selected_item.get('values')[2])
+    yr.insert(0, selected_item.get('values')[3])
+    isbn.insert(0, selected_item.get('values')[4])
+
+
+def clear_input():
+    book_title.delete(0, END)
+    author.delete(0, END)
+    yr.delete(0, END)
+    isbn.delete(0, END)
+    update_id = None
 
 
 def callback(*args):
@@ -160,11 +184,11 @@ search_entry_btn = Button(root, text="Search entry", font=('arial', 10, 'bold'),
 search_entry_btn.grid(row=2, column=3)
 add_entry_btn = Button(root, text="Add entry", font=('arial', 10, 'bold'), width=15, command=addEntry)
 add_entry_btn.grid(row=5, column=3)
-update_selected_btn = Button(root, text="Update Selected", font=('arial', 10, 'bold'), width=15)
+update_selected_btn = Button(root, text="Update Selected", font=('arial', 10, 'bold'), width=15, command=update)
 update_selected_btn.grid(row=6, column=3)
 delete_selected_btn = Button(root, text="Delete selected", font=('arial', 10, 'bold'), width=15, command=delete)
 delete_selected_btn.grid(row=7, column=3)
-close_btn = Button(root, text="Close", font=('arial', 10, 'bold'), width=15)
+close_btn = Button(root, text="Close", font=('arial', 10, 'bold'), width=15, command=root.destroy)
 close_btn.grid(row=8, column=3)
 
 # Adding the display label
@@ -172,29 +196,24 @@ data_entry_frame = Frame(root, bd=1, width=400, height=250, bg="cyan")
 data_entry_frame.grid(row=3, rowspan=6, columnspan=3)
 
 # frm = Frame(root)
-treev = ttk.Treeview(data_entry_frame, selectmode='browse')
-treev.pack(side='left', fill='x')
-verscrlbar = ttk.Scrollbar(data_entry_frame,
-                           orient="vertical",
-                           command=treev.yview)
-verscrlbar.pack(side='right', fill='y')
-treev.configure(xscrollcommand=verscrlbar.set)
+view_table = ttk.Treeview(data_entry_frame, selectmode='browse')
+view_table.pack(side='left', fill='x')
+scrollbar = ttk.Scrollbar(data_entry_frame,
+                          orient="vertical",
+                          command=view_table.yview)
+scrollbar.pack(side='right', fill='y')
+view_table.configure(xscrollcommand=scrollbar.set)
 # Defining number of columns
-treev["columns"] = ("0", "1", "2", "3", "4")
+view_table["columns"] = ("0", "1", "2", "3", "4")
 # Defining heading
-treev['show'] = 'headings'
-treev.column("0", width=10)
+view_table['show'] = 'headings'
+view_table.column("0", width=10)
+view_table.column("3", width=60)
 
-treev.heading(0, text="Id")
-treev.heading(1, text="Title")
-treev.heading(2, text="Author")
-treev.heading(3, text="Year")
-treev.heading(4, text="Isbn")
-
-# Commit Changes
-conn.commit()
-
-# Close connection
-conn.close()
+view_table.heading(0, text="Id")
+view_table.heading(1, text="Title")
+view_table.heading(2, text="Author")
+view_table.heading(3, text="Year")
+view_table.heading(4, text="Isbn")
 
 root.mainloop()
